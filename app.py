@@ -1,23 +1,19 @@
-
-from flask import Flask, request, jsonify
-import openai
-import os
+from flask import Flask, request, Response
+from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    data = request.get_json()
-    message = data.get("Body", "")
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": message}]
-    )
-    reply = response["choices"][0]["message"]["content"]
-    return jsonify({"reply": reply})
+    incoming_msg = request.form.get("Body")
+    print(f"Mensaje recibido: {incoming_msg}")
 
-@app.route("/", methods=["GET"])
-def home():
-    return "Villa's Bot is running!"
+    response = MessagingResponse()
+    msg = response.message()
+
+    if "hola" in incoming_msg.lower():
+        msg.body("¡Hola! Soy Villa’s Bot. ¿Sobre qué tema de ciencia o IA querés que te cuente?")
+    else:
+        msg.body("No te entendí. Escribime 'hola' para empezar.")
+
+    return Response(str(response), mimetype="application/xml")
